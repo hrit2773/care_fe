@@ -99,6 +99,9 @@ const CountrySelect = ({
   onChange,
 }: CountrySelectProps) => {
   const { t } = useTranslation();
+  const countryFilter = (value: string, search: string) => {
+    return value.toLowerCase().startsWith(search.trim().toLowerCase()) ? 1 : 0;
+  };
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -121,7 +124,7 @@ const CountrySelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0">
-        <Command>
+        <Command filter={countryFilter}>
           <CommandInput
             placeholder={t("search_country")}
             className="outline-none border-none ring-0 shadow-none"
