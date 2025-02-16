@@ -184,12 +184,12 @@ const AvatarEditModal = ({
 
   return (
     <Dialog open={open} onOpenChange={closeModal}>
-      <DialogContent className="md:max-w-4xl">
+      <DialogContent className="md:max-w-4xl max-h-screen overflow-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">{title}</DialogTitle>
         </DialogHeader>
         <div className="flex h-full w-full items-center justify-center overflow-y-auto">
-          <div className="flex max-h-screen min-h-96 w-full flex-col overflow-auto">
+          <div className="flex max-h-fit min-h-96 w-full flex-col overflow-auto">
             {!isCameraOpen ? (
               <>
                 {preview || imageUrl ? (
