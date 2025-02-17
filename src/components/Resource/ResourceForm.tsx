@@ -274,7 +274,17 @@ export default function ResourceForm({ facilityId, id }: ResourceProps) {
                           </FormLabel>
                           <FormControl>
                             <Autocomplete
-                              options={facilityOptions ?? []}
+                              options={
+                                field.value?.id
+                                  ? [
+                                      {
+                                        label: field.value.name,
+                                        value: field.value.id,
+                                      },
+                                      ...(facilityOptions ?? []),
+                                    ]
+                                  : (facilityOptions ?? [])
+                              }
                               value={field.value?.id ?? ""}
                               placeholder={t("start_typing_to_search")}
                               onSearch={setFacilitySearch}
