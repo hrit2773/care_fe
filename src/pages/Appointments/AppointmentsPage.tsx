@@ -304,6 +304,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
     if (Object.keys(updates).length > 0) {
       setQParams({
         ...qParams,
+        page: null,
         ...updates,
       });
     }
@@ -406,6 +407,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                         onSelect={() =>
                           setQParams({
                             ...qParams,
+                            page: null,
                             practitioner: null,
                             slot: null,
                           })
@@ -426,6 +428,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                           onSelect={() =>
                             setQParams({
                               ...qParams,
+                              page: null,
                               practitioner: user.username,
                               slot: null,
                             })
@@ -479,6 +482,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                           const today = new Date();
                           setQParams({
                             ...qParams,
+                            page: null,
                             date_from: dateQueryString(subDays(today, 7)),
                             date_to: dateQueryString(today),
                             slot: null,
@@ -495,6 +499,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                           const today = new Date();
                           setQParams({
                             ...qParams,
+                            page: null,
                             date_from: dateQueryString(subDays(today, 1)),
                             date_to: dateQueryString(subDays(today, 1)),
                             slot: null,
@@ -511,6 +516,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                           const today = new Date();
                           setQParams({
                             ...qParams,
+                            page: null,
                             date_from: dateQueryString(today),
                             date_to: dateQueryString(today),
                             slot: null,
@@ -527,6 +533,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                           const today = new Date();
                           setQParams({
                             ...qParams,
+                            page: null,
                             date_from: dateQueryString(today),
                             date_to: dateQueryString(addDays(today, 7)),
                             slot: null,
@@ -543,6 +550,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                           const today = new Date();
                           setQParams({
                             ...qParams,
+                            page: null,
                             date_from: dateQueryString(today),
                             date_to: dateQueryString(addDays(today, 30)),
                             slot: null,
@@ -565,6 +573,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                       onChange={(date) =>
                         setQParams({
                           ...qParams,
+                          page: null,
                           date_from: date?.from
                             ? dateQueryString(date.from)
                             : null,
@@ -584,9 +593,9 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
                 selectedSlot={slot}
                 onSelect={(slot) => {
                   if (slot === "all") {
-                    setQParams({ ...qParams, slot: null });
+                    setQParams({ ...qParams, page: null, slot: null });
                   } else {
-                    setQParams({ ...qParams, slot });
+                    setQParams({ ...qParams, page: null, slot });
                   }
                 }}
               />
@@ -599,7 +608,9 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
             className="w-[300px]"
             placeholder={t("search")}
             value={qParams.search ?? ""}
-            onChange={(e) => setQParams({ ...qParams, search: e.target.value })}
+            onChange={(e) =>
+              setQParams({ ...qParams, page: null, search: e.target.value })
+            }
           />
         </div>
       </div>
@@ -781,7 +792,7 @@ function AppointmentRow(props: {
 }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<Appointment["status"]>("booked");
-  const { Pagination, resultsPerPage } = useFilters({
+  const { qParams, Pagination, resultsPerPage, updateQuery } = useFilters({
     limit: 5,
   });
 
@@ -824,7 +835,10 @@ function AppointmentRow(props: {
         <Tabs
           value={status}
           className="w-full overflow-scroll"
-          onValueChange={(value) => setStatus(value as Appointment["status"])}
+          onValueChange={(value) => {
+            setStatus(value as Appointment["status"]);
+            updateQuery({ ...qParams, page: null });
+          }}
         >
           <TabsList>
             <TabsTrigger value="booked">{t("booked")}</TabsTrigger>
