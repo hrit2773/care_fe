@@ -62,6 +62,7 @@ import Loading from "@/components/Common/Loading";
 import Page from "@/components/Common/Page";
 
 import useAuthUser from "@/hooks/useAuthUser";
+import useFilters from "@/hooks/useFilters";
 
 import mutate from "@/Utils/request/mutate";
 import query from "@/Utils/request/query";
@@ -777,12 +778,16 @@ function AppointmentRow(props: {
 }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<Appointment["status"]>("booked");
+  const { qParams, Pagination, resultsPerPage } = useFilters({
+    limit: 15,
+  });
 
   const { data } = useQuery({
     queryKey: [
       "appointments",
       props.facilityId,
       status,
+      qParams,
       props.practitioner,
       props.slot,
       props.date_from,
@@ -792,11 +797,12 @@ function AppointmentRow(props: {
       pathParams: { facility_id: props.facilityId },
       queryParams: {
         status: status,
-        limit: 100,
         slot: props.slot,
         user: props.practitioner ?? undefined,
         date_after: props.date_from,
         date_before: props.date_to,
+        limit: resultsPerPage,
+        offset: ((qParams.page ?? 1) - 1) * resultsPerPage,
       },
     }),
     enabled: !!props.date_from && !!props.date_to,
@@ -869,6 +875,7 @@ function AppointmentRow(props: {
             </TableBody>
           </Table>
         )}
+        <Pagination totalCount={data?.count ?? 0} />
       </div>
     </>
   );
