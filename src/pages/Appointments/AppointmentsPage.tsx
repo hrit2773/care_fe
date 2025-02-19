@@ -88,6 +88,7 @@ import scheduleApis from "@/types/scheduling/scheduleApi";
 interface QueryParams {
   practitioner: string | null;
   slot: string | null;
+  page: number | null;
   date_from: string | null;
   date_to: string | null;
   search: string | null;
@@ -634,6 +635,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
           facilityId={facilityId}
           practitioner={practitioner?.id ?? null}
           slot={qParams.slot}
+          page={qParams.page}
           date_from={qParams.date_from}
           date_to={qParams.date_to}
           search={qParams.search?.toLowerCase()}
@@ -770,6 +772,7 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
 }
 function AppointmentRow(props: {
   facilityId: string;
+  page: number | null;
   practitioner: string | null;
   slot: string | null;
   date_from: string | null;
@@ -778,8 +781,8 @@ function AppointmentRow(props: {
 }) {
   const { t } = useTranslation();
   const [status, setStatus] = useState<Appointment["status"]>("booked");
-  const { qParams, Pagination, resultsPerPage } = useFilters({
-    limit: 15,
+  const { Pagination, resultsPerPage } = useFilters({
+    limit: 5,
   });
 
   const { data } = useQuery({
@@ -787,7 +790,7 @@ function AppointmentRow(props: {
       "appointments",
       props.facilityId,
       status,
-      qParams,
+      props.page,
       props.practitioner,
       props.slot,
       props.date_from,
@@ -802,7 +805,7 @@ function AppointmentRow(props: {
         date_after: props.date_from,
         date_before: props.date_to,
         limit: resultsPerPage,
-        offset: ((qParams.page ?? 1) - 1) * resultsPerPage,
+        offset: ((props.page ?? 1) - 1) * resultsPerPage,
       },
     }),
     enabled: !!props.date_from && !!props.date_to,
