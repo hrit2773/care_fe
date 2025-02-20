@@ -14,7 +14,7 @@ import {
 } from "date-fns";
 import { Edit3Icon } from "lucide-react";
 import { Link, navigate } from "raviger";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -62,7 +62,7 @@ import Loading from "@/components/Common/Loading";
 import Page from "@/components/Common/Page";
 
 import useAuthUser from "@/hooks/useAuthUser";
-import useFilters from "@/hooks/useFilters";
+import useFilters, { FilterState } from "@/hooks/useFilters";
 
 import mutate from "@/Utils/request/mutate";
 import query from "@/Utils/request/query";
@@ -85,18 +85,31 @@ import {
 } from "@/types/scheduling/schedule";
 import scheduleApis from "@/types/scheduling/scheduleApi";
 
+interface DateRangeDisplayProps {
+  dateFrom: string | null;
+  dateTo: string | null;
+}
+
 interface QueryParams {
   practitioner: string | null;
   slot: string | null;
   page: number | null;
+  status: string | null;
   date_from: string | null;
   date_to: string | null;
   search: string | null;
 }
-
-interface DateRangeDisplayProps {
-  dateFrom: string | null;
-  dateTo: string | null;
+interface FilterParamsInterface {
+  qParams: QueryParams;
+  resultsPerPage: number;
+  updateQuery: (filter: FilterState) => void;
+  Pagination: ({
+    totalCount,
+    noMargin,
+  }: {
+    totalCount: number;
+    noMargin?: boolean;
+  }) => JSX.Element;
 }
 
 function DateRangeDisplay({ dateFrom, dateTo }: DateRangeDisplayProps) {
@@ -244,7 +257,11 @@ function DateRangeDisplay({ dateFrom, dateTo }: DateRangeDisplayProps) {
 export default function AppointmentsPage(props: { facilityId?: string }) {
   const { t } = useTranslation();
   const authUser = useAuthUser();
-  const { qParams, updateQuery } = useFilters({});
+  const filterParams = useFilters({
+    limit: 15,
+  });
+
+  const { qParams, updateQuery } = filterParams;
 
   const facilityId = props.facilityId ?? authUser.home_facility!;
 
@@ -643,6 +660,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
       ) : (
         <AppointmentRow
           facilityId={facilityId}
+          filterParams={filterParams}
           practitioner={practitioner?.id ?? null}
           slot={qParams.slot}
           page={qParams.page}
@@ -782,6 +800,7 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
 }
 function AppointmentRow(props: {
   facilityId: string;
+  filterParams: FilterParamsInterface;
   page: number | null;
   practitioner: string | null;
   slot: string | null;
@@ -790,16 +809,14 @@ function AppointmentRow(props: {
   search?: string;
 }) {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<Appointment["status"]>("booked");
-  const { qParams, Pagination, resultsPerPage, updateQuery } = useFilters({
-    limit: 5,
-  });
+  const { qParams, Pagination, resultsPerPage, updateQuery } =
+    props.filterParams;
 
   const { data } = useQuery({
     queryKey: [
       "appointments",
       props.facilityId,
-      status,
+      qParams.status,
       props.page,
       props.practitioner,
       props.slot,
@@ -809,7 +826,7 @@ function AppointmentRow(props: {
     queryFn: query(scheduleApis.appointments.list, {
       pathParams: { facility_id: props.facilityId },
       queryParams: {
-        status: status,
+        status: qParams.status ?? "booked",
         slot: props.slot,
         user: props.practitioner ?? undefined,
         date_after: props.date_from,
@@ -832,12 +849,11 @@ function AppointmentRow(props: {
     <>
       <div className={cn(!data && "animate-pulse")}>
         <Tabs
-          value={status}
+          value={qParams.status ?? "booked"}
           className="w-full overflow-scroll"
-          onValueChange={(value) => {
-            setStatus(value as Appointment["status"]);
-            updateQuery({ ...qParams, page: null });
-          }}
+          onValueChange={(value) =>
+            updateQuery({ ...qParams, status: value, page: null })
+          }
         >
           <TabsList>
             <TabsTrigger value="booked">{t("booked")}</TabsTrigger>
