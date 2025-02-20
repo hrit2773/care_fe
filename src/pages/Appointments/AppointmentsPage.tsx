@@ -100,7 +100,7 @@ interface QueryParams {
   search: string | null;
 }
 interface FilterParamsInterface {
-  qParams: QueryParams;
+  qParams: any;
   resultsPerPage: number;
   updateQuery: (filter: FilterState) => void;
   Pagination: ({
