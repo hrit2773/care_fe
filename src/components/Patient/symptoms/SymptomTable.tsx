@@ -21,7 +21,6 @@ import { Avatar } from "@/components/Common/Avatar";
 import {
   SYMPTOM_CLINICAL_STATUS_STYLES,
   SYMPTOM_SEVERITY_STYLES,
-  SYMPTOM_VERIFICATION_STATUS_STYLES,
   Symptom,
 } from "@/types/emr/symptom/symptom";
 
@@ -48,7 +47,7 @@ export function SymptomTable({
             {t("status")}
           </TableHead>
           <TableHead className="h-auto  py-1 px-2  text-gray-600">
-            {t("verification")}
+            {t("onset")}
           </TableHead>
           <TableHead className="h-auto  py-1 px-2  text-gray-600">
             {t("notes")}
@@ -95,17 +94,10 @@ export function SymptomTable({
                 {t(symptom.clinical_status)}
               </Badge>
             </TableCell>
-            <TableCell>
-              <Badge
-                variant="outline"
-                className={`whitespace-nowrap capitalize ${
-                  SYMPTOM_VERIFICATION_STATUS_STYLES[
-                    symptom.verification_status
-                  ]
-                }`}
-              >
-                {t(symptom.verification_status)}
-              </Badge>
+            <TableCell className="whitespace-nowrap">
+              {symptom.onset?.onset_datetime
+                ? new Date(symptom.onset.onset_datetime).toLocaleDateString()
+                : "-"}
             </TableCell>
             <TableCell className="max-w-[200px]">
               {symptom.note ? (
