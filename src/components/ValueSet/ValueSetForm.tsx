@@ -35,8 +35,16 @@ import valuesetApi from "@/types/valueset/valuesetApi";
 
 // Create a schema for form validation
 const valuesetFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required"),
+  name: z.string().trim().min(1, "Name is required"),
+  slug: z
+    .string()
+    .trim()
+    .min(5, "Slug is required")
+    .max(25, "Slug is too lengthy")
+    .regex(/^[-\w]+$/, {
+      message:
+        "Slug must only contain letters, numbers, underscores, and hyphens.",
+    }),
   description: z.string(),
   status: z.enum(["active", "inactive"]),
   is_system_defined: z.boolean(),
