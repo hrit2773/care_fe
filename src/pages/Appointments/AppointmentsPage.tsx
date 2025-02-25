@@ -62,7 +62,7 @@ import Loading from "@/components/Common/Loading";
 import Page from "@/components/Common/Page";
 
 import useAuthUser from "@/hooks/useAuthUser";
-import useFilters, { FilterState } from "@/hooks/useFilters";
+import useFilters from "@/hooks/useFilters";
 
 import mutate from "@/Utils/request/mutate";
 import query from "@/Utils/request/query";
@@ -88,28 +88,6 @@ import scheduleApis from "@/types/scheduling/scheduleApi";
 interface DateRangeDisplayProps {
   dateFrom: string | null;
   dateTo: string | null;
-}
-
-interface QueryParams {
-  practitioner: string | null;
-  slot: string | null;
-  page: number | null;
-  status: string | null;
-  date_from: string | null;
-  date_to: string | null;
-  search: string | null;
-}
-interface FilterParamsInterface {
-  qParams: any;
-  resultsPerPage: number;
-  updateQuery: (filter: FilterState) => void;
-  Pagination: ({
-    totalCount,
-    noMargin,
-  }: {
-    totalCount: number;
-    noMargin?: boolean;
-  }) => JSX.Element;
 }
 
 function DateRangeDisplay({ dateFrom, dateTo }: DateRangeDisplayProps) {
@@ -257,15 +235,19 @@ function DateRangeDisplay({ dateFrom, dateTo }: DateRangeDisplayProps) {
 export default function AppointmentsPage(props: { facilityId?: string }) {
   const { t } = useTranslation();
   const authUser = useAuthUser();
-  const filterParams = useFilters({
+  const { qParams, updateQuery, resultsPerPage, Pagination } = useFilters({
     limit: 15,
   });
 
-  const { qParams, updateQuery } = filterParams;
-
+  const paginationComponent = (count: number) => {
+    return <Pagination totalCount={count} />;
+  };
   const facilityId = props.facilityId ?? authUser.home_facility!;
 
   const [activeTab, setActiveTab] = useView("appointments", "board");
+
+  const updateStatus = (value: string) =>
+    updateQuery({ ...qParams, status: value, page: null });
 
   const schedulableUsersQuery = useQuery({
     queryKey: ["schedulable-users", facilityId],
@@ -285,7 +267,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
       return;
     }
 
-    const updates: Partial<QueryParams> = {};
+    const updates: Partial<any> = {};
 
     // Sets the practitioner filter to the current user if they are in the list of
     // schedulable users and no practitioner was selected.
@@ -660,13 +642,16 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
       ) : (
         <AppointmentRow
           facilityId={facilityId}
-          filterParams={filterParams}
+          updateStatus={updateStatus}
           practitioner={practitioner?.id ?? null}
           slot={qParams.slot}
           page={qParams.page}
           date_from={qParams.date_from}
           date_to={qParams.date_to}
           search={qParams.search?.toLowerCase()}
+          resultsPerPage={resultsPerPage}
+          status={qParams.status}
+          paginationComponent={paginationComponent}
         />
       )}
     </Page>
@@ -800,23 +785,24 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
 }
 function AppointmentRow(props: {
   facilityId: string;
-  filterParams: FilterParamsInterface;
   page: number | null;
   practitioner: string | null;
+  paginationComponent: (count: number) => JSX.Element;
+  updateStatus: (value: string) => void;
+  resultsPerPage: number;
   slot: string | null;
+  status: string | null;
   date_from: string | null;
   date_to: string | null;
   search?: string;
 }) {
   const { t } = useTranslation();
-  const { qParams, Pagination, resultsPerPage, updateQuery } =
-    props.filterParams;
 
   const { data } = useQuery({
     queryKey: [
       "appointments",
       props.facilityId,
-      qParams.status,
+      props.status,
       props.page,
       props.practitioner,
       props.slot,
@@ -826,13 +812,13 @@ function AppointmentRow(props: {
     queryFn: query(scheduleApis.appointments.list, {
       pathParams: { facility_id: props.facilityId },
       queryParams: {
-        status: qParams.status ?? "booked",
+        status: props.status ?? "booked",
         slot: props.slot,
         user: props.practitioner ?? undefined,
         date_after: props.date_from,
         date_before: props.date_to,
-        limit: resultsPerPage,
-        offset: ((props.page ?? 1) - 1) * resultsPerPage,
+        limit: props.resultsPerPage,
+        offset: ((props.page ?? 1) - 1) * props.resultsPerPage,
       },
     }),
     enabled: !!props.date_from && !!props.date_to,
@@ -849,11 +835,9 @@ function AppointmentRow(props: {
     <>
       <div className={cn(!data && "animate-pulse")}>
         <Tabs
-          value={qParams.status ?? "booked"}
+          value={props.status ?? "booked"}
           className="w-full overflow-scroll"
-          onValueChange={(value) =>
-            updateQuery({ ...qParams, status: value, page: null })
-          }
+          onValueChange={(value) => props.updateStatus(value)}
         >
           <TabsList>
             <TabsTrigger value="booked">{t("booked")}</TabsTrigger>
@@ -907,7 +891,7 @@ function AppointmentRow(props: {
             </TableBody>
           </Table>
         )}
-        <Pagination totalCount={data?.count ?? 0} />
+        {props.paginationComponent(data?.count ?? 0)}
       </div>
     </>
   );
