@@ -8,7 +8,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import CareIcon from "@/CAREUI/icons/CareIcon";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -258,15 +258,30 @@ const MedicationRow: React.FC<MedicationRowProps> = ({
               return (
                 <div
                   key={admin.id}
-                  className={`flex font-medium items-center gap-2 rounded-md p-2 mb-2 cursor-pointer justify-between border ${colorClass}`}
+                  className={`flex font-medium flex-col rounded-md p-2 mb-2 cursor-pointer border ${colorClass}`}
                   onClick={() => onEditAdministration(medication, admin)}
                 >
-                  <div className="flex flex-col md:flex-row items-center gap-1">
+                  <div className="flex justify-between">
                     <div>
                       <CareIcon
                         icon="l-check-circle"
-                        className="h-3 w-3 self-center"
+                        className="h-4 w-4 self-center"
                       />
+                    </div>
+                    <div>
+                      {admin.note && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-4 w-4 hover:${colorClass} p-0`}
+                        >
+                          <CareIcon icon="l-notes" className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    <span>
                       {new Date(
                         admin.occurrence_period_start,
                       ).toLocaleTimeString("en-US", {
@@ -274,11 +289,11 @@ const MedicationRow: React.FC<MedicationRowProps> = ({
                         minute: "2-digit",
                         hour12: true,
                       })}
-                    </div>
-                    <div>
-                      {admin.occurrence_period_end && (
-                        <>
-                          {"- "}
+                    </span>
+                    {admin.occurrence_period_end && (
+                      <>
+                        <span>{"-"}</span>
+                        <span>
                           {new Date(
                             admin.occurrence_period_end,
                           ).toLocaleTimeString("en-US", {
@@ -286,19 +301,10 @@ const MedicationRow: React.FC<MedicationRowProps> = ({
                             minute: "2-digit",
                             hour12: true,
                           })}
-                        </>
-                      )}
-                    </div>
+                        </span>
+                      </>
+                    )}
                   </div>
-                  {admin.note && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`h-4 w-4 hover:${colorClass} p-0`}
-                    >
-                      <CareIcon icon="l-notes" className="h-3 w-3" />
-                    </Button>
-                  )}
                 </div>
               );
             })}
@@ -641,113 +647,124 @@ export const AdministrationTab: React.FC<AdministrationTabProps> = ({
     content = <EmptyState searching searchQuery={searchQuery} />;
   } else {
     content = (
-      <ScrollArea className="w-full whitespace-nowrap rounded-md">
-        <Card className="w-full border-none shadow-none min-w-[640px]">
-          <div className="grid grid-cols-[minmax(200px,2fr),repeat(4,minmax(140px,1fr)),40px]">
-            {/* Top row without vertical borders */}
-            <div className="col-span-full grid grid-cols-subgrid">
-              <div className="flex items-center justify-between p-4 bg-gray-50 border-t border-gray-50">
-                <div className="flex items-center gap-2 whitespace-break-spaces">
-                  {lastModifiedDate && (
-                    <div className="text-xs text-[#6b7280]">
-                      {t("last_modified")}{" "}
-                      {formatDistanceToNow(lastModifiedDate)} {t("ago")}
-                    </div>
-                  )}
+      <>
+        {!filteredMedications.length && (
+          <CardContent className="p-2">
+            <p className="text-gray-500 w-full flex justify-center mb-3">
+              {t("no_active_medication_recorded")}
+            </p>
+          </CardContent>
+        )}
+        <ScrollArea className="w-full whitespace-nowrap rounded-md">
+          <Card className="w-full border-none shadow-none min-w-[640px]">
+            <div className="grid grid-cols-[minmax(200px,2fr),repeat(4,minmax(140px,1fr)),40px]">
+              {/* Top row without vertical borders */}
+              <div className="col-span-full grid grid-cols-subgrid">
+                <div className="flex items-center justify-between p-4 bg-gray-50 border-t border-gray-50">
+                  <div className="flex items-center gap-2 whitespace-break-spaces">
+                    {lastModifiedDate && (
+                      <div className="text-xs text-[#6b7280]">
+                        {t("last_modified")}{" "}
+                        {formatDistanceToNow(lastModifiedDate)} {t("ago")}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end items-center bg-gray-50 rounded">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-gray-400 mr-2"
+                      onClick={handlePreviousSlot}
+                      disabled={!canGoBack}
+                      title={
+                        !canGoBack
+                          ? t("cannot_go_before_prescription_date")
+                          : ""
+                      }
+                    >
+                      <CareIcon icon="l-angle-left" className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex justify-end items-center bg-gray-50 rounded">
+                {visibleSlots.map((slot) => (
+                  <TimeSlotHeader
+                    key={`${format(slot.date, "yyyy-MM-dd")}-${slot.start}`}
+                    slot={slot}
+                    isCurrentSlot={isTimeInSlot(currentDate, slot)}
+                    isEndSlot={slot.date.getTime() === currentDate.getTime()}
+                  />
+                ))}
+                <div className="flex justify-start items-center px-1 bg-gray-50">
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 text-gray-400 mr-2"
-                    onClick={handlePreviousSlot}
-                    disabled={!canGoBack}
-                    title={
-                      !canGoBack ? t("cannot_go_before_prescription_date") : ""
-                    }
+                    className="h-8 w-8 text-gray-400"
+                    onClick={handleNextSlot}
+                    disabled={isTimeInSlot(currentDate, visibleSlots[3])}
                   >
-                    <CareIcon icon="l-angle-left" className="h-4 w-4" />
+                    <CareIcon icon="l-angle-right" className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              {visibleSlots.map((slot) => (
-                <TimeSlotHeader
-                  key={`${format(slot.date, "yyyy-MM-dd")}-${slot.start}`}
-                  slot={slot}
-                  isCurrentSlot={isTimeInSlot(currentDate, slot)}
-                  isEndSlot={slot.date.getTime() === currentDate.getTime()}
-                />
-              ))}
-              <div className="flex justify-start items-center px-1 bg-gray-50">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 text-gray-400"
-                  onClick={handleNextSlot}
-                  disabled={isTimeInSlot(currentDate, visibleSlots[3])}
-                >
-                  <CareIcon icon="l-angle-right" className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
 
-            {/* Main content with borders */}
-            <div className="col-span-full grid grid-cols-subgrid divide-x divide-[#e5e7eb] border-l border-r">
-              {/* Headers */}
-              <div className="p-4 font-medium text-sm border-t bg-[#F3F4F6] text-secondary-700">
-                {t("medicine")}:
-              </div>
-              {visibleSlots.map((slot, i) => (
-                <div
-                  key={`${format(slot.date, "yyyy-MM-dd")}-${slot.start}`}
-                  className="p-4 font-semibold text-xs text-center border-t relative bg-[#F3F4F6] text-secondary-700"
-                >
-                  {i === endSlotIndex &&
-                    slot.date.getTime() === currentDate.getTime() && (
-                      <div className="absolute top-0 left-1/2 -translate-y-1/2 -translate-x-1/2">
-                        <div className="h-2 w-2 rounded-full bg-blue-500" />
-                      </div>
-                    )}
-                  {slot.label}
+              {/* Main content with borders */}
+              <div className="col-span-full grid grid-cols-subgrid divide-x divide-[#e5e7eb] border-l border-r">
+                {/* Headers */}
+                <div className="p-4 font-medium text-sm border-t bg-[#F3F4F6] text-secondary-700">
+                  {t("medicine")}:
                 </div>
-              ))}
-              <div className="border-t bg-[#F3F4F6]" />
+                {visibleSlots.map((slot, i) => (
+                  <div
+                    key={`${format(slot.date, "yyyy-MM-dd")}-${slot.start}`}
+                    className="p-4 font-semibold text-xs text-center border-t relative bg-[#F3F4F6] text-secondary-700"
+                  >
+                    {i === endSlotIndex &&
+                      slot.date.getTime() === currentDate.getTime() && (
+                        <div className="absolute top-0 left-1/2 -translate-y-1/2 -translate-x-1/2">
+                          <div className="h-2 w-2 rounded-full bg-blue-500" />
+                        </div>
+                      )}
+                    {slot.label}
+                  </div>
+                ))}
+                <div className="border-t bg-[#F3F4F6]" />
 
-              {/* Medication rows */}
-              {filteredMedications?.map((medication) => (
-                <MedicationRow
-                  key={medication.id}
-                  medication={medication}
-                  visibleSlots={visibleSlots}
-                  currentDate={currentDate}
-                  administrations={administrations?.results}
-                  onAdminister={handleAdminister}
-                  onEditAdministration={handleEditAdministration}
-                  onDiscontinue={handleDiscontinue}
+                {/* Medication rows */}
+                {filteredMedications?.map((medication) => (
+                  <MedicationRow
+                    key={medication.id}
+                    medication={medication}
+                    visibleSlots={visibleSlots}
+                    currentDate={currentDate}
+                    administrations={administrations?.results}
+                    onAdminister={handleAdminister}
+                    onEditAdministration={handleEditAdministration}
+                    onDiscontinue={handleDiscontinue}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {stoppedMedications?.results?.length > 0 && !searchQuery.trim() && (
+              <div
+                className="p-4 border-t border-[#e5e7eb] flex items-center gap-2 cursor-pointer hover:bg-gray-50"
+                onClick={() => setShowStopped(!showStopped)}
+              >
+                <CareIcon
+                  icon={showStopped ? "l-eye-slash" : "l-eye"}
+                  className="h-4 w-4"
                 />
-              ))}
-            </div>
-          </div>
-
-          {stoppedMedications?.results?.length > 0 && !searchQuery.trim() && (
-            <div
-              className="p-4 border-t border-[#e5e7eb] flex items-center gap-2 cursor-pointer hover:bg-gray-50"
-              onClick={() => setShowStopped(!showStopped)}
-            >
-              <CareIcon
-                icon={showStopped ? "l-eye-slash" : "l-eye"}
-                className="h-4 w-4"
-              />
-              <span className="text-sm underline">
-                {showStopped ? t("hide") : t("show")}{" "}
-                {`${stoppedMedications?.results?.length} ${t("stopped")}`}{" "}
-                {t("prescriptions")}
-              </span>
-            </div>
-          )}
-        </Card>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+                <span className="text-sm underline">
+                  {showStopped ? t("hide") : t("show")}{" "}
+                  {`${stoppedMedications?.results?.length} ${t("stopped")}`}{" "}
+                  {t("prescriptions")}
+                </span>
+              </div>
+            )}
+          </Card>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </>
     );
   }
 
