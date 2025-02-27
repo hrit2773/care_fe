@@ -40,7 +40,7 @@ function ValuesetAutoComplete(props: { valueset: string }) {
     queryKey: ["valueset", props.valueset, "expand", search],
     queryFn: query.debounced(routes.valueset.expand, {
       pathParams: { system: props.valueset },
-      body: { search: "", count: 10 },
+      body: { search, count: 10 },
     }),
   });
   return (
