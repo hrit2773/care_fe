@@ -239,9 +239,6 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
     limit: 15,
   });
 
-  const paginationComponent = (count: number) => {
-    return <Pagination totalCount={count} />;
-  };
   const facilityId = props.facilityId ?? authUser.home_facility!;
 
   const [activeTab, setActiveTab] = useView("appointments", "board");
@@ -651,7 +648,7 @@ export default function AppointmentsPage(props: { facilityId?: string }) {
           search={qParams.search?.toLowerCase()}
           resultsPerPage={resultsPerPage}
           status={qParams.status}
-          paginationComponent={paginationComponent}
+          Pagination={Pagination}
         />
       )}
     </Page>
@@ -787,7 +784,13 @@ function AppointmentRow(props: {
   facilityId: string;
   page: number | null;
   practitioner: string | null;
-  paginationComponent: (count: number) => JSX.Element;
+  Pagination: ({
+    totalCount,
+    noMargin,
+  }: {
+    totalCount: number;
+    noMargin?: boolean;
+  }) => JSX.Element;
   updateStatus: (value: string) => void;
   resultsPerPage: number;
   slot: string | null;
@@ -891,7 +894,7 @@ function AppointmentRow(props: {
             </TableBody>
           </Table>
         )}
-        {props.paginationComponent(data?.count ?? 0)}
+        {props.Pagination({ totalCount: data?.count ?? 0 })}
       </div>
     </>
   );
