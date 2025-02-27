@@ -1,3 +1,4 @@
+import careConfig from "@careConfig";
 import { differenceInMinutes, format } from "date-fns";
 import { toPng } from "html-to-image";
 
@@ -5,10 +6,6 @@ import dayjs from "@/Utils/dayjs";
 import { Time } from "@/Utils/types";
 import { Patient } from "@/types/emr/newPatient";
 import { PatientModel } from "@/types/emr/patient";
-import {
-  Organization,
-  OrganizationParent,
-} from "@/types/organization/organization";
 
 const DATE_FORMAT = "DD/MM/YYYY";
 const TIME_FORMAT = "hh:mm A";
@@ -96,6 +93,16 @@ export const isUserOnline = (user: { last_login: DateLike }) => {
   return user.last_login
     ? dayjs().subtract(5, "minutes").isBefore(user.last_login)
     : false;
+};
+
+export const isAndroidDevice = /android/i.test(navigator.userAgent);
+
+export const getMapUrl = (latitude: string, longitude: string) => {
+  return isAndroidDevice
+    ? `geo:${latitude},${longitude}`
+    : careConfig.mapFallbackUrlTemplate
+        .replace("{lat}", latitude)
+        .replace("{long}", longitude);
 };
 
 const getRelativeDateSuffix = (abbreviated: boolean) => {
@@ -230,16 +237,28 @@ export const conditionalAttribute = <T>(
   return condition ? attributes : {};
 };
 
-export const stringifyGeoOrganization = (org: Organization) => {
+export const conditionalArrayAttribute = <T>(
+  condition: boolean,
+  attributes: T[],
+) => {
+  return condition ? attributes : [];
+};
+
+export const stringifyNestedObject = <
+  T extends { name: string; parent?: Partial<T> },
+>(
+  obj: T,
+  separator = ", ",
+) => {
   const levels: string[] = [];
 
-  let current: OrganizationParent | undefined = org;
+  let current: Partial<T> | undefined = obj;
   while (current?.name) {
     levels.push(current.name);
     current = current.parent;
   }
 
-  return levels.join(", ");
+  return levels.join(separator);
 };
 
 export const mergeAutocompleteOptions = (
