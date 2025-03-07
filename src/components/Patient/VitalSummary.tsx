@@ -5,17 +5,14 @@ import { useTranslation } from "react-i18next";
 
 import PrintPreview from "@/CAREUI/misc/PrintPreview";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { ObservationPlotConfig } from "@/components/Common/Charts/ObservationChart";
+
 import api from "@/Utils/request/api";
 import routes from "@/Utils/request/api";
 import query from "@/Utils/request/query";
 import { formatName, formatPatientAge } from "@/Utils/utils";
-import { ObservationPlotConfig } from "@/src/components/Common/Charts/ObservationChart";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/card";
 import { ObservationAnalyzeResponse } from "@/types/emr/observation";
 
 interface VitalSummaryProps {
